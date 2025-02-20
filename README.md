@@ -38,7 +38,7 @@ MXTK (Mineral Token) is an ERC20-compliant token implemented on Arbitrum that re
 ### New Constants
 
 solidity
-address public constant ARBITRUM_UNIVERSAL_ROUTER = 0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD;
+address public constant ARBITRUM_UNIVERSAL_ROUTER = 0xa51afafe0263b40edaef0df8781ea9aa03e381a3;
 bool public isRouterWhitelisted;
 
 ### New Functions
@@ -266,7 +266,7 @@ await mxtk.setZeroFeeAndWhitelistArbitrumRouter(true);
 ### Network Details
 
 - Network: Arbitrum
-- Universal Router: `0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD`
+- Universal Router V2: `0xa51afafe0263b40edaef0df8781ea9aa03e381a3`
 
 ### Gas Optimization
 
@@ -406,7 +406,7 @@ Before proceeding with any Uniswap operations, verify:
 
    ```solidity
    // Check Router allowance
-   const routerAllowance = await allowance(address(this), routerAddress);
+   const routerAllowance = await allowance(address(this), ROUTER_ADDRESS);
    routerAllowance == type(uint256).max // Should be true
    ```
 
@@ -933,7 +933,8 @@ main()
 
    ```solidity
    // In MXTK.sol - Confirm this address
-   address public constant ARBITRUM_UNIVERSAL_ROUTER = 0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD;
+   address public constant ARBITRUM_UNIVERSAL_ROUTER = 0xa51afafe0263b40edaef0df8781ea9aa03e381a3;
+   ```
    ```
 
 2. Configure Chainlink mainnet price feeds:
@@ -1052,7 +1053,7 @@ main()
        // Verify router allowance
        const routerAllowance = await mxtk.allowance(
            mxtk.address,
-           "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+           "0xa51afafe0263b40edaef0df8781ea9aa03e381a3"
        );
        console.log("Router allowance:", routerAllowance.toString());
    }
