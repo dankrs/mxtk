@@ -380,4 +380,26 @@ node_modules
 bin_output
 logs
 .cursorrules
-Error.md
+
+# Build and dependency directories
+node_modules/
+dist/
+build/
+bin_output/
+
+# Log files
+logs/
+*.log
+
+# Test coverage
+coverage/
+.coverage
+coverage.json
+
+# Hardhat files
+cache/
+artifacts/
+
+# TypeChain files
+typechain
+typechain-types
