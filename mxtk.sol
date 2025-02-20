@@ -39,6 +39,14 @@ OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable, ReentrancyGuard {
     string[] public mineralSymbols;
     uint256 public totalAssetValue; // Total value of all assets in the contract
 
+    // Update these constants at the top of your contract
+    address public constant ARBITRUM_UNIVERSAL_ROUTER = 0xa51afafe0263b40edaef0df8781ea9aa03e381a3;
+    address public constant ARBITRUM_GOERLI_UNIVERSAL_ROUTER = 0x4648a43B2C14Da09FdF82B161150d3F634f40491;
+    address public constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    // State variable to track if router is set
+    bool public isRouterWhitelisted;
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -542,5 +550,65 @@ OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable, ReentrancyGuard {
         existingDataToHolding(0x91852aEC928690F4F55e556c4b000302b04c3e30, "Qmb4am5G3yZKfQd3nBtuhWHmXTgzr6y6cV8dFwp3f9WTGn", "GR", 192000000000);
         existingDataToHolding(0x91852aEC928690F4F55e556c4b000302b04c3e30, "QmRohsANeKkPktGDmfWdpKuBmcCizEJS2TnXV6m1tBdYAQ", "AU", 71651);
     }
+
+    /**
+     * @notice Sets fees to zero and whitelists Arbitrum's Universal Router
+     * @dev This should be called before creating any Uniswap V3 pools
+     */
+    function setZeroFeeAndWhitelistArbitrumRouter(bool isTestnet) external onlyOwner {
+        // Check if router is already whitelisted
+        require(!isRouterWhitelisted, "Router already whitelisted");
+        
+        // Set fee to zero
+        setGasFeePercentageBps(0);
+
+        // Select appropriate router address based on network
+        address routerAddress = isTestnet ? 
+            ARBITRUM_GOERLI_UNIVERSAL_ROUTER : 
+            ARBITRUM_UNIVERSAL_ROUTER;
+
+        // Whitelist the Universal Router by excluding it from fees
+        excludedFromFees[routerAddress] = true;
+        
+        // Mark router as whitelisted
+        isRouterWhitelisted = true;
+        
+        // Emit event for tracking
+        emit RouterWhitelisted(routerAddress);
+    }
+    
+    /**
+     * @notice Checks if the Universal Router is properly whitelisted
+     * @return bool True if router is whitelisted and fees are zero
+     */
+    function isRouterProperlyConfigured(bool isTestnet) public view returns (bool) {
+        address routerAddress = isTestnet ? 
+            ARBITRUM_GOERLI_UNIVERSAL_ROUTER : 
+            ARBITRUM_UNIVERSAL_ROUTER;
+
+        return excludedFromFees[routerAddress] && 
+               gasFeePercentageBps == 0 &&
+               isRouterWhitelisted &&
+               allowance(address(this), PERMIT2) == type(uint256).max;
+    }
+    
+    // Add this event with your other events
+    event RouterWhitelisted(address indexed router);
+
+    function approvePermit2() external {
+        // Approve max for Permit2
+        _approve(msg.sender, PERMIT2, type(uint256).max);
+        emit Permit2Approved(msg.sender);
+    }
+
+    event Permit2Approved(address indexed user);
+
+    function approveRouter() external {
+        // Approve max for Universal Router
+        _approve(msg.sender, ARBITRUM_UNIVERSAL_ROUTER, type(uint256).max);
+        emit RouterApproved(msg.sender);
+    }
+
+    event RouterApproved(address indexed user);
 
 }
