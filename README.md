@@ -364,3 +364,190 @@ await mxtk.setZeroFeeAndWhitelistArbitrumRouter(true);
 await mxtk.approvePermit2();
 await mxtk.approveRouter();
 ```
+
+## Manual Deployment Guide
+
+### Prerequisites
+
+1. Install and set up a Web3 development environment:
+   - Remix IDE (https://remix.ethereum.org/)
+   - MetaMask wallet with sufficient funds
+   - Network RPC endpoints configured in MetaMask
+
+### Step-by-Step Deployment Process
+
+#### 1. Contract Preparation
+
+1. Deploy Dependencies First:
+   ```solidity
+   // Deploy in this order:
+   1. PriceEventEmitter.sol
+   2. PriceOracle.sol (for each mineral)
+   3. MXTK.sol
+   ```
+
+2. For each deployment, verify the following:
+   - Correct network selected in MetaMask
+   - Sufficient funds for deployment
+   - Correct compiler version (^0.8.20)
+   - All optimizations enabled
+
+#### 2. MXTK Contract Deployment
+
+1. **Deploy Implementation Contract**
+   - Load MXTK.sol in Remix
+   - Select "Deploy & Run Transactions"
+   - Choose compiler version 0.8.20
+   - Enable optimization (200 runs)
+   - Deploy implementation contract
+   - Save implementation address
+
+2. **Deploy Proxy Contract**
+   ```solidity
+   // Use OpenZeppelin's ERC1967Proxy
+   constructor(
+       address _implementation,
+       bytes memory _initializerData  // initialize() function call
+   )
+   ```
+   Parameters:
+   - `_implementation`: Address from step 1
+   - `_initializerData`: ABI-encoded initialize() call with owner address
+
+3. **Initialize Contract**
+   ```solidity
+   // Call through proxy
+   function initialize(address initialOwner) public initializer
+   ```
+   - Call this function only once
+   - Set initialOwner to your admin wallet
+
+#### 3. Oracle Integration
+
+1. **Deploy Price Oracles**
+   ```solidity
+   // For each mineral (e.g., Gold, Silver)
+   PriceOracle oracle = new PriceOracle(
+       "Mineral Name",
+       "SYMBOL",
+       mxtkAddress,
+       emitterAddress
+   );
+   ```
+
+2. **Link Oracles to MXTK**
+   ```solidity
+   // For each mineral
+   await mxtk.updateMineralPriceOracle(
+       "SYMBOL",
+       oracleAddress,
+       ownerAddress
+   );
+   ```
+
+#### 4. Uniswap V3 Integration
+
+1. **Configure Router**
+   ```solidity
+   // Set network-specific router
+   await mxtk.setZeroFeeAndWhitelistArbitrumRouter(isTestnet);
+   
+   // Verify configuration
+   await mxtk.isRouterProperlyConfigured(isTestnet);
+   ```
+
+2. **Setup Permissions**
+   ```solidity
+   // Approve Permit2
+   await mxtk.approvePermit2();
+   
+   // Approve Router
+   await mxtk.approveRouter();
+   ```
+
+#### 5. Initial Data Setup
+
+1. **Port Existing Minerals**
+   ```solidity
+   // Add initial mineral data
+   await mxtk.portExistingMinerals();
+   ```
+
+2. **Verify Initial State**
+   ```solidity
+   // Check total supply
+   await mxtk.totalSupply();
+   
+   // Verify mineral prices
+   await mxtk.getMineralPrice("AU");
+   ```
+
+### Network-Specific Configurations
+
+#### Base Sepolia (Testnet)
+```solidity
+const ROUTER_ADDRESS = "0x95273d871c8156636e114b63797d78D7E1720d81";
+const IS_TESTNET = true;
+```
+
+#### Arbitrum One (Mainnet)
+```solidity
+const ROUTER_ADDRESS = "0xa51afafe0263b40edaef0df8781ea9aa03e381a3";
+const IS_TESTNET = false;
+```
+
+### Post-Deployment Verification
+
+1. **Contract Verification**
+   - Verify implementation contract on block explorer
+   - Verify proxy contract
+   - Verify initialization parameters
+
+2. **Functional Testing**
+   ```solidity
+   // Test basic operations
+   await mxtk.symbol();  // Should return "MXTK"
+   await mxtk.name();    // Should return "Mineral Token"
+   await mxtk.decimals(); // Should return 18
+   
+   // Test router configuration
+   await mxtk.isRouterWhitelisted(); // Should return true
+   ```
+
+3. **Security Checks**
+   - Verify owner address
+   - Check fee configurations
+   - Validate oracle connections
+
+### Emergency Procedures
+
+1. **Pause Contract**
+   ```solidity
+   // Only owner can call
+   await mxtk.pause();
+   ```
+
+2. **Emergency Shutdown**
+   ```solidity
+   // In case of critical issues
+   await mxtk.pause();
+   // Implement additional safety measures
+   ```
+
+### Monitoring Setup
+
+1. **Event Monitoring**
+   ```solidity
+   // Listen for critical events
+   mxtk.on("RouterWhitelisted", (router) => {
+       console.log("Router whitelisted:", router);
+   });
+   ```
+
+2. **Price Updates**
+   ```solidity
+   // Monitor price changes
+   priceOracle.on("PriceUpdated", (price) => {
+       console.log("New price:", price);
+   });
+   ```
