@@ -46,11 +46,11 @@ bool public isRouterWhitelisted;
 #### setZeroFeeAndWhitelistArbitrumRouter
 
 ```solidity
-function setZeroFeeAndWhitelistArbitrumRouter() external onlyOwner
+function setZeroFeeAndWhitelistArbitrumRouter(bool isTestnet) external onlyOwner
 ```
 
 - Sets transfer fees to zero
-- Whitelists Arbitrum's Universal Router
+- Whitelists appropriate Universal Router based on network (mainnet or testnet)
 - Can only be called once
 - Must be called before creating Uniswap V3 pools
 
@@ -103,11 +103,11 @@ address constant ARBITRUM_UNIVERSAL_ROUTER = 0xa51afafe0263b40edaef0df8781ea9aa0
 address constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 ```
 
-#### Testnet (Arbitrum Goerli)
+#### Testnet (Base Sepolia)
 
 ```solidity
 // Universal Router V1
-address constant ARBITRUM_GOERLI_UNIVERSAL_ROUTER = 0x4648a43B2C14Da09FdF82B161150d3F634f40491;
+address constant BASE_SEPOLIA_UNIVERSAL_ROUTER = 0x95273d871c8156636e114b63797d78D7E1720d81;
 
 // Permit2 (same for all networks)
 address constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
@@ -116,7 +116,7 @@ address constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 ### Address Verification Sources
 
 - Mainnet Router: [Universal Router Arbitrum Deployment](https://github.com/Uniswap/universal-router/blob/main/deploy-addresses/arbitrum.json)
-- Testnet Router: [Universal Router Arbitrum Goerli Deployment](https://github.com/Uniswap/universal-router/blob/main/deploy-addresses/arbitrum-goerli.json)
+- Testnet Router: [Universal Router Base Sepolia Deployment](https://github.com/Uniswap/universal-router/blob/main/deploy-addresses/base-sepolia.json)
 - These addresses are official Uniswap deployments and should be carefully verified before use
 
 ### Universal Router Configuration
@@ -202,7 +202,7 @@ After configuration, verify ALL of the following:
 await mxtk.setZeroFeeAndWhitelistArbitrumRouter(false);
 ```
 
-#### Testnet Deployment
+#### Testnet Deployment (Base Sepolia)
 
 ```javascript
 // Deploy with testnet configuration
@@ -323,7 +323,7 @@ npm install -g @nomiclabs/hardhat-ethers
 ```bash
 # .env.testnet
 TESTNET_PRIVATE_KEY=your_testnet_private_key
-ARBITRUM_GOERLI_RPC_URL=your_testnet_rpc
+BASE_SEPOLIA_RPC_URL=your_testnet_rpc
 ETHERSCAN_API_KEY=your_etherscan_api_key
 
 # .env.mainnet
@@ -332,7 +332,7 @@ ARBITRUM_MAINNET_RPC_URL=your_mainnet_rpc
 ETHERSCAN_API_KEY=your_etherscan_api_key
 ```
 
-### Testnet Deployment (Arbitrum Goerli)
+### Testnet Deployment (Base Sepolia)
 
 1. Network Configuration
 
@@ -340,9 +340,9 @@ ETHERSCAN_API_KEY=your_etherscan_api_key
 // hardhat.config.js
 module.exports = {
   networks: {
-    arbitrumGoerli: {
-      url: "https://goerli-rollup.arbitrum.io/rpc",
-      chainId: 421613,
+    baseSepolia: {
+      url: "https://sepolia.base.org",
+      chainId: 84532,
       accounts: [process.env.TESTNET_PRIVATE_KEY]
     }
   }
@@ -353,140 +353,14 @@ module.exports = {
 
 ```bash
 # Deploy using testnet script
-npx hardhat run scripts/deploy-testnet.js --network arbitrumGoerli
+npx hardhat run scripts/deploy-testnet.js --network baseSepolia
 ```
 
 3. Router Configuration
 
 ```javascript
-// Testnet Universal Router: 0x4648a43B2C14Da09FdF82B161150d3F634f40491
+// Testnet Universal Router: 0x95273d871c8156636e114b63797d78D7E1720d81
 await mxtk.setZeroFeeAndWhitelistArbitrumRouter(true);
 await mxtk.approvePermit2();
 await mxtk.approveRouter();
 ```
-
-4. Verify Configuration
-
-```javascript
-const isConfigured = await mxtk.isRouterProperlyConfigured(true);
-require(isConfigured, "Router not properly configured");
-```
-
-### Mainnet Deployment (Arbitrum One)
-
-1. Pre-deployment Checklist
-
-- [ ] Contract fully tested on testnet
-- [ ] Security audit completed
-- [ ] Multi-sig wallet ready
-- [ ] Emergency procedures documented
-- [ ] Sufficient ETH for deployment
-
-2. Network Configuration
-
-```javascript
-// hardhat.config.js
-module.exports = {
-  networks: {
-    arbitrumOne: {
-      url: "https://arb1.arbitrum.io/rpc",
-      chainId: 42161,
-      accounts: [process.env.MAINNET_PRIVATE_KEY]
-    }
-  }
-}
-```
-
-3. Deploy Contract
-
-```bash
-# Deploy using mainnet script
-npx hardhat run scripts/deploy-mainnet.js --network arbitrumOne
-```
-
-4. Router Configuration
-
-```javascript
-// Mainnet Universal Router: 0xa51afafe0263b40edaef0df8781ea9aa03e381a3
-await mxtk.setZeroFeeAndWhitelistArbitrumRouter(false);
-await mxtk.approvePermit2();
-await mxtk.approveRouter();
-```
-
-5. Verify Configuration
-
-```javascript
-const isConfigured = await mxtk.isRouterProperlyConfigured(false);
-require(isConfigured, "Router not properly configured");
-```
-
-### Post-Deployment Verification (Both Networks)
-
-1. Contract Verification
-
-```bash
-# Verify on Arbiscan
-npx hardhat verify --network [network] [contract_address]
-```
-
-2. Configuration Checks
-
-```javascript
-// Check router status
-const routerAddress = isTestnet ? 
-    "0x4648a43B2C14Da09FdF82B161150d3F634f40491" : 
-    "0xa51afafe0263b40edaef0df8781ea9aa03e381a3";
-
-// Verify exclusions and allowances
-await excludedFromFees[routerAddress] // Should be true
-await isRouterWhitelisted() // Should be true
-await gasFeePercentageBps() // Should be 0
-
-// Check Permit2 allowance
-const permit2Allowance = await allowance(
-    address(this), 
-    "0x000000000022D473030F116dDEE9F6B43aC78BA3"
-);
-```
-
-### Security Considerations
-
-1. Network-Specific
-
-- Use different deployer accounts for testnet and mainnet
-- Verify router addresses match the intended network
-- Double-check all configurations before mainnet deployment
-
-2. Access Control
-
-- Use multi-sig wallet for mainnet ownership
-- Implement timelock for critical functions
-- Regular monitoring of owner operations
-
-3. Emergency Procedures
-
-- Have pause mechanism ready
-- Document emergency contact procedures
-- Maintain upgrade capabilities
-
-### Monitoring and Maintenance
-
-1. Regular Checks
-
-```javascript
-// Monitor token price
-await getTokenValue()
-
-// Verify mineral values
-await calculateMineralValueInWei(mineralSymbol, mineralOunces)
-
-// Check holding values
-await calculateHoldingValueInWei(holdingOwner, ipfsCid)
-```
-
-2. Event Monitoring
-
-- Watch RouterWhitelisted events
-- Monitor MineralAdded events
-- Track TokenPriceUpdated events
-- Observe GasFeePercentageBpsUpdated events

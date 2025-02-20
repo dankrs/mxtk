@@ -41,7 +41,7 @@ OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable, ReentrancyGuard {
 
     // Update these constants at the top of your contract
     address public constant ARBITRUM_UNIVERSAL_ROUTER = 0xa51afafe0263b40edaef0df8781ea9aa03e381a3;
-    address public constant ARBITRUM_GOERLI_UNIVERSAL_ROUTER = 0x4648a43B2C14Da09FdF82B161150d3F634f40491;
+    address public constant BASE_SEPOLIA_UNIVERSAL_ROUTER = 0x95273d871c8156636e114b63797d78D7E1720d81;
     address public constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
     // State variable to track if router is set
@@ -564,7 +564,7 @@ OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable, ReentrancyGuard {
 
         // Select appropriate router address based on network
         address routerAddress = isTestnet ? 
-            ARBITRUM_GOERLI_UNIVERSAL_ROUTER : 
+            BASE_SEPOLIA_UNIVERSAL_ROUTER : 
             ARBITRUM_UNIVERSAL_ROUTER;
 
         // Whitelist the Universal Router by excluding it from fees
@@ -583,7 +583,7 @@ OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable, ReentrancyGuard {
      */
     function isRouterProperlyConfigured(bool isTestnet) public view returns (bool) {
         address routerAddress = isTestnet ? 
-            ARBITRUM_GOERLI_UNIVERSAL_ROUTER : 
+            BASE_SEPOLIA_UNIVERSAL_ROUTER : 
             ARBITRUM_UNIVERSAL_ROUTER;
 
         return excludedFromFees[routerAddress] && 
